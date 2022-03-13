@@ -1,10 +1,12 @@
 import os
+import io
 import re
 import json
 import html
 import argparse
 import requests
 from tqdm.auto import tqdm
+from mutagen.mp3 import MP3
 from typing import Callable
 from dataclasses import dataclass
 from multiprocessing import cpu_count
@@ -37,21 +39,12 @@ args = parser.parse_args()
 
 
 
-def getPage(url: str) -> str:
+def download(url: str) -> requests.Response:
 
 	response = requests.get(url)
 	assert response.ok
 
-	return response.text
-
-
-def downloadFile(url: str, path: str) -> None:
-
-	response = requests.get(url)
-	assert response.ok
-
-	with open(path, 'wb') as f:
-		f.write(response.content)
+	return response
 
 
 @dataclass
@@ -104,7 +97,7 @@ def processInParallel(array: list, function: Callable[[any], any], description: 
 	result = []
 
 	for r in tqdm(
-			ThreadPool(threads).imap_unordered(
+			ThreadPool(threads).map(
 				function,
 				array
 			),
@@ -125,24 +118,18 @@ def downloadAlbum(album: Album, output_folder: str, threads: int) -> None:
 	tracks_folder = os.path.join(output_folder, album.title)
 	os.makedirs(tracks_folder, exist_ok=True)
 
-	processInParallel(
-		array=[t for t in album.tracks if t.released],
-		function=lambda t: downloadFile(
-			url=t.url,
-			path=os.path.join(
-				tracks_folder,
-				composeTrackFileName(t)
-			)
-		),
-		description=f"Downloading album '{album.title}'",
-		threads=threads
-	)
+	for t in album.tracks:
+
+		data = download(t.url).content
+		tags = MP3(io.BytesIO(data))
+		print(dir(tags))
+		exit()
 
 
 
 pages = processInParallel(
 	array=args.url,
-	function=getPage,
+	function=lambda u: download(u).text,
 	description='Downloading albums pages',
 	threads=args.threads
 )
