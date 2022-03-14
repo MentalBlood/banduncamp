@@ -1,7 +1,7 @@
 import os
 from typing import Callable
-from bs4 import BeautifulSoup
 from dataclasses import dataclass
+from bs4 import BeautifulSoup, Tag
 
 from .Album import Album
 from .download import download
