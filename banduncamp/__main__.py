@@ -1,5 +1,4 @@
 import os
-import io
 import re
 import json
 import html
@@ -7,11 +6,9 @@ import mutagen
 import argparse
 import requests
 from tqdm.auto import tqdm
-from mutagen.mp3 import MP3
-from mutagen.id3 import ID3
 from typing import Callable
-from mutagen.id3 import TextFrame
 from dataclasses import dataclass
+from bs4 import BeautifulSoup, Tag
 from mutagen.easyid3 import EasyID3
 from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool
@@ -51,6 +48,22 @@ def download(url: str) -> requests.Response:
 	return response
 
 
+def processInParallel(array: list, function: Callable[[any], any], description: str, pool: ThreadPool):
+
+	result = []
+
+	bar = tqdm(desc=description, total=len(array))
+
+	for r in pool.imap_unordered(
+			function,
+			array
+		):
+		result.append(r)
+		bar.update(1)
+
+	return result
+
+
 @dataclass
 class Track:
 	number: int
@@ -69,7 +82,20 @@ class Album:
 	tracks: list[Track]
 
 
-def getAlbum(page: str) -> Album:
+@dataclass
+class Artist:
+	title: str
+	albums: list[Album]
+
+
+@dataclass
+class DownloadTrackTask:
+	track: Track
+	album: Album
+	output_folder: str
+
+
+def parseAlbumPage(page: str) -> Album:
 
 	data = json.loads(
 		html.unescape(
@@ -96,20 +122,34 @@ def getAlbum(page: str) -> Album:
 	)
 
 
-def processInParallel(array: list, function: Callable[[any], any], description: str, threads: int):
+def parseArtistPage(page: str, pool: ThreadPool) -> Artist:
 
-	result = []
+	root = BeautifulSoup(page, 'html.parser')
 
-	bar = tqdm(desc=description, total=len(array))
+	grid_items = filter(
+		lambda c: isinstance(c, Tag),
+		root.find(id='music-grid').children
+	)
 
-	for r in ThreadPool(threads).imap_unordered(
-			function,
-			array
-		):
-		result.append(r)
-		bar.update(1)
+	base_url = root.find('meta', {'property': 'og:url'})['content']
+	albums_urls = [
+		f"{base_url}{g.find('a')['href']}"
+		for g in grid_items
+	]
 
-	return result
+	artist_title = root.find('meta', {'property': 'og:title'})['content']
+
+	albums = processInParallel(
+		array=albums_urls,
+		function=lambda u: parseAlbumPage(download(u).text),
+		description=f"Parsing albums pages for artist '{artist_title}'",
+		pool=pool
+	)
+
+	return Artist(
+		title=artist_title,
+		albums=albums
+	)
 
 
 def composeTrackFileName(track: Track) -> str:
@@ -138,27 +178,69 @@ def downloadTrack(track: Track, album: Album, output_folder: str) -> None:
 	tags.save(file_path, v1=2)
 
 
-def downloadAlbum(album: Album, output_folder: str, threads: int) -> None:
+def composeAlbumDownloadTasks(album: Album, output_folder: str, pool: ThreadPool) -> list[DownloadTrackTask]:
 
-	tracks_folder = os.path.join(output_folder, album.title)
+	tracks_folder = os.path.join(output_folder, album.title.replace('/', '_'))
 	os.makedirs(tracks_folder, exist_ok=True)
+	
+	return [
+		DownloadTrackTask(
+			track=t,
+			album=album,
+			output_folder=tracks_folder
+		)
+		for t in album.tracks
+	]
 
-	processInParallel(
-		array=album.tracks,
-		function=lambda t: downloadTrack(t, album, tracks_folder),
-		description=f"Downloading album '{album.title}'",
-		threads=threads
-	)
+
+def composeArtistDownloadTasks(artist: Artist, output_folder: str, pool: ThreadPool) -> list[DownloadTrackTask]:
+
+	albums_folder = os.path.join(output_folder, artist.title.replace('/', '_'))
+	os.makedirs(albums_folder, exist_ok=True)
+
+	return sum([
+		composeAlbumDownloadTasks(a, albums_folder, pool)
+		for a in artist.albums
+	], start=[])
+
+
+def processUrl(url: str, pool: ThreadPool) -> Album | Artist:
+
+	page = download(url).text
+
+	if 'album' in url.split('/'):
+		result = parseAlbumPage(page)
+	else:
+		result = parseArtistPage(page, pool)
+
+	return result
+
+
+def composeDownloadTasks(o: Album | Artist, output: str, pool: ThreadPool) -> list[DownloadTrackTask]:
+	if isinstance(o, Album):
+		return composeAlbumDownloadTasks(o, output, pool)
+	elif isinstance(o, Artist):
+		return composeArtistDownloadTasks(o, output, pool)
 
 
 
-pages = processInParallel(
+pool = ThreadPool(args.threads)
+
+objects = processInParallel(
 	array=args.url,
-	function=lambda u: download(u).text,
-	description='Downloading albums pages',
-	threads=args.threads
+	function=lambda u: processUrl(u, pool),
+	description='Downloading and parsing pages',
+	pool=pool
 )
 
-for p in pages:
-	album = getAlbum(p)
-	downloadAlbum(album, args.output, args.threads)
+tasks = sum([
+	composeDownloadTasks(o, args.output, pool)
+	for o in objects
+], start=[])
+
+processInParallel(
+	array=tasks,
+	function=lambda t: downloadTrack(**t.__dict__),
+	description='Downloading tracks',
+	pool=pool
+)
