@@ -3,12 +3,16 @@ import io
 import re
 import json
 import html
+import mutagen
 import argparse
 import requests
 from tqdm.auto import tqdm
 from mutagen.mp3 import MP3
+from mutagen.id3 import ID3
 from typing import Callable
+from mutagen.id3 import TextFrame
 from dataclasses import dataclass
+from mutagen.easyid3 import EasyID3
 from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool
 
@@ -96,15 +100,14 @@ def processInParallel(array: list, function: Callable[[any], any], description: 
 
 	result = []
 
-	for r in tqdm(
-			ThreadPool(threads).map(
-				function,
-				array
-			),
-			desc=description,
-			total=len(array)
+	bar = tqdm(desc=description, total=len(array))
+
+	for r in ThreadPool(threads).imap_unordered(
+			function,
+			array
 		):
 		result.append(r)
+		bar.update(1)
 
 	return result
 
@@ -113,17 +116,39 @@ def composeTrackFileName(track: Track) -> str:
 	return f'{track.title}.mp3'
 
 
+def downloadTrack(track: Track, album: Album, output_folder: str) -> None:
+
+	file_path = os.path.join(output_folder, composeTrackFileName(track))
+	data = download(track.url).content
+	with open(file_path, 'wb') as f:
+		f.write(data)
+
+	try:
+		tags = EasyID3(file_path)
+	except mutagen.id3.ID3NoHeaderError:
+		f = mutagen.File(file_path, easy=True)
+		f.add_tags()
+		tags = f
+
+	tags['title'] = track.title
+	tags['album'] = album.title
+	tags['artist'] = album.artist
+	tags['albumartist'] = album.artist
+	tags['tracknumber'] = str(track.number)
+	tags.save(file_path, v1=2)
+
+
 def downloadAlbum(album: Album, output_folder: str, threads: int) -> None:
 
 	tracks_folder = os.path.join(output_folder, album.title)
 	os.makedirs(tracks_folder, exist_ok=True)
 
-	for t in album.tracks:
-
-		data = download(t.url).content
-		tags = MP3(io.BytesIO(data))
-		print(dir(tags))
-		exit()
+	processInParallel(
+		array=album.tracks,
+		function=lambda t: downloadTrack(t, album, tracks_folder),
+		description=f"Downloading album '{album.title}'",
+		threads=threads
+	)
 
 
 
