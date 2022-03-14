@@ -24,6 +24,11 @@ class Album:
 		tracks_folder = os.path.join(output_folder, self.title.replace('/', '_'))
 		os.makedirs(tracks_folder, exist_ok=True)
 
+		cover = download(self.cover_url).content
+		cover_path = os.path.join(tracks_folder, 'cover.jpg')
+		with open(cover_path, 'wb') as f:
+			f.write(cover)
+
 		return sum([
 			t.download(tracks_folder)
 			for t in self.tracks
@@ -39,7 +44,7 @@ class Album:
 				re.search('data-tralbum=\"([^\"]*)\"', page).group(1)
 			)
 		)
-		cover_url = re.search('<a class="popupImage" href="([^\"]*)', page).group(1)
+		cover_url = re.search('<a class="popupImage" href="([^\"]*)', page).group(1).replace('https', 'http')
 
 		return Album(
 			artist=data['artist'],
