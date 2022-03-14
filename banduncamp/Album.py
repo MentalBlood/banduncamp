@@ -21,7 +21,7 @@ class Album:
 
 	def download(self, output_folder: str) -> list[Callable[[str], None]]:
 
-		tracks_folder = os.path.join(output_folder, self.title.replace('/', '_'))
+		tracks_folder = os.path.join(output_folder, self.title.replace('/', '_').replace('|', '_').replace(':', ''))
 		os.makedirs(tracks_folder, exist_ok=True)
 
 		cover = download(self.cover_url).content

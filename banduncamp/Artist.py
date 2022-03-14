@@ -2,9 +2,12 @@ import os
 from typing import Callable
 from dataclasses import dataclass
 from bs4 import BeautifulSoup, Tag
+from multiprocessing import cpu_count
+from multiprocessing.pool import ThreadPool
 
 from .Album import Album
 from .download import download
+from .processInParallel import processInParallel
 
 
 
@@ -25,7 +28,7 @@ class Artist:
 		], start=[])
 
 	@classmethod
-	def fromUrl(_, url):
+	def fromUrl(_, url, pool=None):
 
 		page = download(url).text
 
@@ -46,8 +49,10 @@ class Artist:
 
 		return Artist(
 			title=artist_title,
-			albums=[
-				Album.fromUrl(u)
-				for u in albums_urls
-			]
+			albums=processInParallel(
+				array=albums_urls,
+				function=lambda u: Album.fromUrl(u),
+				description=f"Downloading '{artist_title}' albums pages",
+				pool=pool or ThreadPool(cpu_count())
+			)
 		)

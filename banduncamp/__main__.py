@@ -1,13 +1,11 @@
 import os
 import argparse
-from tqdm.auto import tqdm
-from typing import Callable
 from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool
 
 from .Album import Album
 from .Artist import Artist
-from .download import download
+from .processInParallel import processInParallel
 
 
 
@@ -36,19 +34,6 @@ args = parser.parse_args()
 
 
 
-def processInParallel(array: list, function: Callable[[any], any], description: str, pool: ThreadPool):
-
-	result = []
-
-	bar = tqdm(desc=description, total=len(array))
-
-	for r in pool.imap_unordered(function, array):
-		result.append(r)
-		bar.update(1)
-
-	return result
-
-
 def processUrl(url: str) -> Album | Artist:
 
 	if 'album' in url.split('/'):
@@ -60,7 +45,7 @@ def processUrl(url: str) -> Album | Artist:
 
 
 
-pool = ThreadPool(args.threads)
+pool = ThreadPool(int(args.threads))
 
 objects = processInParallel(
 	array=args.url,
