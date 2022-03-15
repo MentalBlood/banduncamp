@@ -6,10 +6,15 @@ from random import randrange
 
 def download(url: str) -> requests.Response:
 
-	response = requests.get(url)
+	while True:
 
-	while not response.ok:
-		sleep(randrange(4, 20) / 10)
-		response = requests.get(url)
+		try:
+			response = requests.get(url)
+			if response.ok:
+				break
+		except (requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError):
+			pass
+
+		sleep(randrange(2, 14) / 10)
 
 	return response

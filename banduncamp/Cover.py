@@ -14,8 +14,11 @@ class Cover:
 
 	def _download(self, output_folder: str) -> None:
 
-		data = download(self.url).content
 		path = os.path.join(output_folder, 'cover.jpg')
+		if os.path.exists(path):
+			return
+
+		data = download(self.url).content
 		with open(path, 'wb') as f:
 			f.write(data)
 

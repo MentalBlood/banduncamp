@@ -16,14 +16,20 @@ class Track:
 	title: str
 	album: str
 	artist: str
-	url: str
+	url: str | None
 	number: int
 	duration: int
 	released: bool
 
 	def _download(self, output_folder: str) -> None:
 
+		if not self.url:
+			return
+
 		file_path = os.path.join(output_folder, f'{correctFileName(self.title)}.mp3')
+		if os.path.exists(file_path):
+			return
+
 		data = download(self.url).content
 		with open(file_path, 'wb') as f:
 			f.write(data)

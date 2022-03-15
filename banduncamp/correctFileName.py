@@ -9,5 +9,5 @@ def correctFileName(name: str):
 	return re.sub(
 		special_characters,
 		'',
-		name
+		name.strip('. ')
 	)
