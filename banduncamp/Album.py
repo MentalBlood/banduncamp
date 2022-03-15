@@ -5,9 +5,14 @@ import html
 from typing import Callable
 from dataclasses import dataclass
 
+from .Cover import Cover
 from .Track import Track
 from .download import download
+from .correctFileName import correctFileName
 
+
+
+unicode_shit = re.compile(r'\\u\d\d\d\d')
 
 
 @dataclass
@@ -15,24 +20,21 @@ class Album:
 
 	title: str
 	artist: str
-	cover_url: str
+	cover: Cover
 	date: str
 	tracks: list[Track]
 
 	def download(self, output_folder: str) -> list[Callable[[str], None]]:
 
-		tracks_folder = os.path.join(output_folder, self.title.replace('/', '_').replace('|', '_').replace(':', ''))
+		tracks_folder = os.path.join(output_folder, correctFileName(self.title))
 		os.makedirs(tracks_folder, exist_ok=True)
 
-		cover = download(self.cover_url).content
-		cover_path = os.path.join(tracks_folder, 'cover.jpg')
-		with open(cover_path, 'wb') as f:
-			f.write(cover)
+		result = []
+		result.extend(self.cover.download(tracks_folder))
+		for t in self.tracks:
+			result.extend(t.download(tracks_folder))
 
-		return sum([
-			t.download(tracks_folder)
-			for t in self.tracks
-		], start=[])
+		return result
 
 	@classmethod
 	def fromUrl(_, url):
@@ -41,7 +43,11 @@ class Album:
 
 		data = json.loads(
 			html.unescape(
-				re.search('data-tralbum=\"([^\"]*)\"', page).group(1)
+				re.sub(
+					unicode_shit,
+					'',
+					re.search('data-tralbum=\"([^\"]*)\"', page).group(1)
+				)
 			)
 		)
 		cover_url = re.search('<a class="popupImage" href="([^\"]*)', page).group(1).replace('https', 'http')
@@ -49,7 +55,7 @@ class Album:
 		return Album(
 			artist=data['artist'],
 			title=data['current']['title'],
-			cover_url=cover_url,
+			cover=Cover(cover_url),
 			date=data['current']['release_date'],
 			tracks=[
 				Track(

@@ -7,6 +7,7 @@ from multiprocessing.pool import ThreadPool
 
 from .Album import Album
 from .download import download
+from .correctFileName import correctFileName
 from .processInParallel import processInParallel
 
 
@@ -19,7 +20,7 @@ class Artist:
 
 	def download(self, output_folder: str) -> list[Callable[[str], None]]:
 
-		albums_folder = os.path.join(output_folder, self.title.replace('/', '_'))
+		albums_folder = os.path.join(output_folder, correctFileName(self.title))
 		os.makedirs(albums_folder, exist_ok=True)
 
 		return sum([

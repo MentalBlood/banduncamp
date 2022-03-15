@@ -62,6 +62,6 @@ tasks = sum([
 processInParallel(
 	array=tasks,
 	function=lambda t: t(),
-	description='Downloading tracks',
+	description='Downloading covers and tracks',
 	pool=pool
 )

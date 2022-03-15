@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from mutagen.easyid3 import EasyID3
 
 from .download import download
+from .correctFileName import correctFileName
 
 
 
@@ -22,7 +23,7 @@ class Track:
 
 	def _download(self, output_folder: str) -> None:
 
-		file_path = os.path.join(output_folder, f'{self.title}.mp3')
+		file_path = os.path.join(output_folder, f'{correctFileName(self.title)}.mp3')
 		data = download(self.url).content
 		with open(file_path, 'wb') as f:
 			f.write(data)
