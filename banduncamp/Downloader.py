@@ -9,7 +9,6 @@ from dataclasses import dataclass
 class Downloader:
 
 	getSleepTime: Callable[[int], None]
-	exceptions: tuple[Exception]=(requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError)
 
 	def __call__(self, url: str, output: str=None) -> requests.Response | None:
 
@@ -21,7 +20,7 @@ class Downloader:
 				response = requests.get(url)
 				if response.ok:
 					break
-			except :
+			except (requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError):
 				pass
 
 			sleep(self.getSleepTime(self.try_number))
