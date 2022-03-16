@@ -22,9 +22,9 @@ class Downloadable:
 	def getFolder(self, output_folder: str) -> str:
 		return os.path.join(output_folder, correctFileName(self.title))
 
-	def getDownload(self, output_folder, *args, **kwargs) -> list[Callable[[], None]]:
+	def getDownload(self, output_folder) -> list[Callable[[], None]]:
 
-		result = [partial(self.download, output_folder, *args, **kwargs)]
+		result = [partial(self.download, output_folder)]
 
 		if self.children:
 

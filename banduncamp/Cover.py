@@ -24,9 +24,5 @@ class Cover(Downloadable):
 		self.downloader(self.url, path)
 
 	@classmethod
-	def fromUrl(_, url, *args, **kwargs):
-		return Cover(
-			*args,
-			url=url.replace('https', 'http'),
-			**kwargs
-		)
+	def fromUrl(_, url):
+		return Cover(url.replace('https', 'http'))
