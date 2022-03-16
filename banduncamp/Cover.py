@@ -13,7 +13,7 @@ class Cover(Downloadable):
 
 	def download(self, downloader, output_folder) -> None:
 
-		path = os.path.join(output_folder, 'cover.jpg')
+		path = os.path.join(output_folder, self.file_name)
 		if os.path.exists(path):
 			return
 
