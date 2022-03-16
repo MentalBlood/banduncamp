@@ -52,7 +52,10 @@ class Album:
 		return Album(
 			artist=data['artist'],
 			title=data['current']['title'],
-			cover=Cover.fromUrl(cover_url, downloader),
+			cover=Cover.fromUrl(
+				url=cover_url,
+				downloader=downloader
+			),
 			date=data['current']['release_date'],
 			tracks=[
 				Track(

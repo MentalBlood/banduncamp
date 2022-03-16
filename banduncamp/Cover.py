@@ -3,7 +3,7 @@ from typing import Callable
 from functools import partial
 from dataclasses import dataclass
 
-from .Downloader import download
+from .Downloader import Downloader
 
 
 
@@ -11,6 +11,7 @@ from .Downloader import download
 class Cover:
 
 	url: str
+	downloader: Downloader
 	file_name: str='cover.jpg'
 
 	def _download(self, output_folder: str) -> None:
@@ -19,7 +20,7 @@ class Cover:
 		if os.path.exists(path):
 			return
 
-		data = download(self.url).content
+		data = self.downloader(self.url).content
 		with open(path, 'wb') as f:
 			f.write(data)
 
