@@ -6,12 +6,13 @@ from dataclasses import dataclass
 from mutagen.easyid3 import EasyID3
 
 from .Downloader import Downloader
+from .Downloadable import Downloadable
 from .correctFileName import correctFileName
 
 
 
 @dataclass
-class Track:
+class Track(Downloadable):
 
 	title: str
 	album: str
@@ -23,7 +24,7 @@ class Track:
 
 	downloader: Downloader
 
-	def _download(self, output_folder: str) -> None:
+	def download(self, output_folder: str) -> None:
 
 		if not self.url:
 			return
@@ -32,9 +33,7 @@ class Track:
 		if os.path.exists(file_path):
 			return
 
-		data = self.downloader(self.url).content
-		with open(file_path, 'wb') as f:
-			f.write(data)
+		self.downloader(self.url, file_path)
 
 		try:
 			tags = EasyID3(file_path)
@@ -51,6 +50,3 @@ class Track:
 			'tracknumber': str(self.number)
 		})
 		tags.save(file_path, v1=2)
-	
-	def download(self, output_folder: str) -> list[Callable[[str], None]]:
-		return [partial(self._download, output_folder=output_folder)]

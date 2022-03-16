@@ -1,5 +1,3 @@
-import os
-from typing import Callable
 from dataclasses import dataclass
 from bs4 import BeautifulSoup, Tag
 from multiprocessing import cpu_count
@@ -7,26 +5,20 @@ from multiprocessing.pool import ThreadPool
 
 from .Album import Album
 from .Downloader import Downloader
-from .correctFileName import correctFileName
+from .Downloadable import Downloadable
 from .processInParallel import processInParallel
 
 
 
 @dataclass
-class Artist:
+class Artist(Downloadable):
 
 	title: str
 	albums: list[Album]
 
-	def download(self, output_folder: str) -> list[Callable[[str], None]]:
-
-		albums_folder = os.path.join(output_folder, correctFileName(self.title))
-		os.makedirs(albums_folder, exist_ok=True)
-
-		return sum([
-			a.download(albums_folder)
-			for a in self.albums
-		], start=[])
+	@property
+	def children(self):
+		return self.albums
 
 	@classmethod
 	def fromUrl(_, url, downloader: Downloader, pool=None):
@@ -52,9 +44,8 @@ class Artist:
 			title=artist_title,
 			albums=processInParallel(
 				array=albums_urls,
-				function=lambda u: Album.fromUrl(u),
+				function=lambda u: Album.fromUrl(u, downloader),
 				description=f"Downloading '{artist_title}' albums pages",
 				pool=pool or ThreadPool(cpu_count())
-			),
-			downloader=downloader
+			)
 		)

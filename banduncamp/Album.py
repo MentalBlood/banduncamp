@@ -1,37 +1,27 @@
-import os
 import re
 import json
 import html
-from typing import Callable
 from dataclasses import dataclass
 
 from .Cover import Cover
 from .Track import Track
 from .Downloader import Downloader
-from .correctFileName import correctFileName
+from .Downloadable import Downloadable
 
 
 
 @dataclass
-class Album:
+class Album(Downloadable):
 
 	title: str
 	artist: str
 	cover: Cover
 	date: str
 	tracks: list[Track]
-
-	def download(self, output_folder: str) -> list[Callable[[str], None]]:
-
-		tracks_folder = os.path.join(output_folder, correctFileName(self.title))
-		os.makedirs(tracks_folder, exist_ok=True)
-
-		result = []
-		result.extend(self.cover.download(tracks_folder))
-		for t in self.tracks:
-			result.extend(t.download(tracks_folder))
-
-		return result
+	
+	@property
+	def children(self):
+		return [self.cover, *self.tracks]
 
 	@classmethod
 	def fromUrl(_, url, downloader: Downloader):

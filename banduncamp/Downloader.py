@@ -11,7 +11,7 @@ class Downloader:
 	getSleepTime: Callable[[int], None]
 	exceptions: tuple[Exception]=(requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError)
 
-	def __call__(self, url: str) -> requests.Response:
+	def __call__(self, url: str, output: str=None) -> requests.Response | None:
 
 		try_number = 1
 
@@ -27,4 +27,13 @@ class Downloader:
 			sleep(self.getSleepTime(self.try_number))
 			try_number += 1
 
-		return response
+		if output:
+
+			data = response.content
+			with open(output, 'wb') as f:
+				f.write(data)
+
+			return None
+
+		else:
+			return response
