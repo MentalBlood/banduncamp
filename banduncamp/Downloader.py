@@ -23,7 +23,7 @@ class Downloader:
 			except (requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError):
 				pass
 
-			sleep(self.getSleepTime(self.try_number))
+			sleep(self.getSleepTime(try_number))
 			try_number += 1
 
 		if output:
