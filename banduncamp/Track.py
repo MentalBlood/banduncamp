@@ -1,11 +1,8 @@
 import os
 import mutagen
-from typing import Callable
-from functools import partial
 from dataclasses import dataclass
 from mutagen.easyid3 import EasyID3
 
-from .Downloader import Downloader
 from .Downloadable import Downloadable
 from .correctFileName import correctFileName
 
@@ -22,9 +19,7 @@ class Track(Downloadable):
 	duration: int
 	released: bool
 
-	downloader: Downloader
-
-	def download(self, output_folder: str) -> None:
+	def download(self, downloader, output_folder) -> None:
 
 		if not self.url:
 			return
@@ -33,7 +28,7 @@ class Track(Downloadable):
 		if os.path.exists(file_path):
 			return
 
-		self.downloader(self.url, file_path)
+		downloader(self.url, file_path)
 
 		try:
 			tags = EasyID3(file_path)

@@ -61,7 +61,7 @@ objects = processInParallel(
 )
 
 tasks = sum([
-	o.getDownload(args.output)
+	o.getDownload(downloader, args.output)
 	for o in objects
 ], start=[])
 

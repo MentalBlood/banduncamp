@@ -42,10 +42,7 @@ class Album(Downloadable):
 		return Album(
 			artist=data['artist'],
 			title=data['current']['title'],
-			cover=Cover.fromUrl(
-				url=cover_url,
-				downloader=downloader
-			),
+			cover=Cover.fromUrl(cover_url),
 			date=data['current']['release_date'],
 			tracks=[
 				Track(
@@ -55,8 +52,7 @@ class Album(Downloadable):
 					url=track['file']['mp3-128'],
 					number=track['track_num'],
 					duration=track['duration'],
-					released=not track['unreleased_track'],
-					downloader=downloader
+					released=not track['unreleased_track']
 				)
 				for track in data['trackinfo']
 			]
