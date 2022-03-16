@@ -1,10 +1,12 @@
 import os
 import argparse
+from random import randrange
 from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool
 
 from .Album import Album
 from .Artist import Artist
+from .Downloader import Downloader
 from .processInParallel import processInParallel
 
 
@@ -14,7 +16,7 @@ parser.add_argument(
 	'url',
 	type=str,
 	nargs='+',
-	help='input page URL'
+	help='input page: album URL or discography URL'
 )
 parser.add_argument(
 	'-o',
@@ -34,22 +36,26 @@ args = parser.parse_args()
 
 
 
-def processUrl(url: str) -> Album | Artist:
+def processUrl(url: str, downloader: Downloader) -> Album | Artist:
 
 	if 'album' in url.split('/'):
 		C = Album
 	else:
 		C = Artist
 
-	return C.fromUrl(url)
+	return C.fromUrl(
+		url=url,
+		downloader=downloader
+	)
 
 
 
 pool = ThreadPool(int(args.threads))
+downloader = Downloader(lambda _: randrange(2, 14) / 10)
 
 objects = processInParallel(
 	array=args.url,
-	function=lambda u: processUrl(u),
+	function=lambda u: processUrl(u, downloader),
 	description='Downloading and parsing pages',
 	pool=pool
 )

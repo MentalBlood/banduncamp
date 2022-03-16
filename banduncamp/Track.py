@@ -5,7 +5,7 @@ from functools import partial
 from dataclasses import dataclass
 from mutagen.easyid3 import EasyID3
 
-from .download import download
+from .Downloader import Downloader
 from .correctFileName import correctFileName
 
 
@@ -21,6 +21,8 @@ class Track:
 	duration: int
 	released: bool
 
+	downloader: Downloader
+
 	def _download(self, output_folder: str) -> None:
 
 		if not self.url:
@@ -30,7 +32,7 @@ class Track:
 		if os.path.exists(file_path):
 			return
 
-		data = download(self.url).content
+		data = self.downloader(self.url).content
 		with open(file_path, 'wb') as f:
 			f.write(data)
 

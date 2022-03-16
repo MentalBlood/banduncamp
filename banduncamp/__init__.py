@@ -2,7 +2,7 @@ from .Track import Track
 from .Album import Album
 from .Cover import Cover
 from .Artist import Artist
-from .download import download
+from .Downloader import download
 
 
 
@@ -11,5 +11,5 @@ __all__ = [
 	'Album',
 	'Artist',
 	'Cover',
-	'download'
+	'Downloader'
 ]

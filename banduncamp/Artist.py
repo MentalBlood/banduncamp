@@ -6,7 +6,7 @@ from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool
 
 from .Album import Album
-from .download import download
+from .Downloader import Downloader
 from .correctFileName import correctFileName
 from .processInParallel import processInParallel
 
@@ -29,9 +29,9 @@ class Artist:
 		], start=[])
 
 	@classmethod
-	def fromUrl(_, url, pool=None):
+	def fromUrl(_, url, downloader: Downloader, pool=None):
 
-		page = download(url).text
+		page = downloader(url).text
 
 		root = BeautifulSoup(page, 'html.parser')
 
@@ -55,5 +55,6 @@ class Artist:
 				function=lambda u: Album.fromUrl(u),
 				description=f"Downloading '{artist_title}' albums pages",
 				pool=pool or ThreadPool(cpu_count())
-			)
+			),
+			downloader=downloader
 		)

@@ -3,7 +3,7 @@ from typing import Callable
 from functools import partial
 from dataclasses import dataclass
 
-from .download import download
+from .Downloader import download
 
 
 
@@ -11,6 +11,7 @@ from .download import download
 class Cover:
 
 	url: str
+	file_name: str='cover.jpg'
 
 	def _download(self, output_folder: str) -> None:
 
@@ -24,3 +25,7 @@ class Cover:
 
 	def download(self, output_folder: str) -> list[Callable[[str], None]]:
 		return [partial(self._download, output_folder=output_folder)]
+
+	@classmethod
+	def fromUrl(_, url, *args, **kwargs):
+		return Cover(url.replace('https', 'http'), *args, **kwargs)

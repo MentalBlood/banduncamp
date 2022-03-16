@@ -7,12 +7,9 @@ from dataclasses import dataclass
 
 from .Cover import Cover
 from .Track import Track
-from .download import download
+from .Downloader import Downloader
 from .correctFileName import correctFileName
 
-
-
-unicode_shit = re.compile(r'\\u\d\d\d\d')
 
 
 @dataclass
@@ -37,35 +34,36 @@ class Album:
 		return result
 
 	@classmethod
-	def fromUrl(_, url):
+	def fromUrl(_, url, downloader: Downloader):
 
-		page = download(url).text
+		page = downloader(url).text
 
 		data = json.loads(
 			html.unescape(
 				re.sub(
-					unicode_shit,
+					r'\\u\d\d\d\d',
 					'',
-					re.search('data-tralbum=\"([^\"]*)\"', page).group(1)
+					re.search(r'data-tralbum=\"([^\"]*)\"', page).group(1)
 				)
 			)
 		)
-		cover_url = re.search('<a class="popupImage" href="([^\"]*)', page).group(1).replace('https', 'http')
+		cover_url = re.search('<a class="popupImage" href="([^\"]*)', page).group(1)
 
 		return Album(
 			artist=data['artist'],
 			title=data['current']['title'],
-			cover=Cover(cover_url),
+			cover=Cover.fromUrl(cover_url, downloader),
 			date=data['current']['release_date'],
 			tracks=[
 				Track(
 					title=track['title'],
 					album=data['current']['title'],
 					artist=data['artist'],
-					url=(track['file'] or {}).get('mp3-128', None),
+					url=track['file']['mp3-128'],
 					number=track['track_num'],
 					duration=track['duration'],
-					released=not track['unreleased_track']
+					released=not track['unreleased_track'],
+					downloader=downloader
 				)
 				for track in data['trackinfo']
 			]
