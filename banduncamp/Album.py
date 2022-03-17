@@ -39,21 +39,25 @@ class Album(Downloadable):
 		)
 		cover_url = re.search('<a class="popupImage" href="([^\"]*)', page).group(1)
 
+		tracks = []
+		for t in data['trackinfo']:
+			try:
+				tracks.append(Track(
+					title=t['title'],
+					album=data['current']['title'],
+					artist=data['artist'],
+					url=t['file']['mp3-128'],
+					number=t['track_num'],
+					duration=t['duration'],
+					released=not t['unreleased_track']
+				))
+			except (TypeError, KeyError):
+				pass
+
 		return Album(
 			artist=data['artist'],
 			title=data['current']['title'],
 			cover=Cover.fromUrl(cover_url),
 			date=data['current']['release_date'],
-			tracks=[
-				Track(
-					title=track['title'],
-					album=data['current']['title'],
-					artist=data['artist'],
-					url=track['file']['mp3-128'],
-					number=track['track_num'],
-					duration=track['duration'],
-					released=not track['unreleased_track']
-				)
-				for track in data['trackinfo']
-			]
+			tracks=tracks
 		)
