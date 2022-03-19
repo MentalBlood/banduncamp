@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from mutagen.easyid3 import EasyID3
 
 from .Downloadable import Downloadable
-from .correctFileName import correctFileName
 
 
 
@@ -24,7 +23,7 @@ class Track(Downloadable):
 		if not self.url:
 			return
 
-		file_path = os.path.join(output_folder, f'{correctFileName(self.title)}.mp3')
+		file_path = os.path.join(output_folder, f'{self.title}.mp3')
 		if os.path.exists(file_path):
 			return
 
