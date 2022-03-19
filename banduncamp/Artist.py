@@ -6,6 +6,7 @@ from multiprocessing.pool import ThreadPool
 from .Album import Album
 from .Downloader import Downloader
 from .Downloadable import Downloadable
+from .correctFileName import correctFileName
 from .processInParallel import processInParallel
 
 
@@ -41,7 +42,7 @@ class Artist(Downloadable):
 		artist_title = root.find('meta', {'property': 'og:title'})['content']
 
 		return Artist(
-			title=artist_title,
+			title=correctFileName(artist_title),
 			albums=processInParallel(
 				array=albums_urls,
 				function=lambda u: Album.fromUrl(u, downloader),
