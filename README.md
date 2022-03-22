@@ -27,6 +27,8 @@ python -m banduncamp <artist_page>/music
 
 Note that `artist_page` should look like `https://artist.bandcamp.com/`
 
+Tool will not download audio file if it already exists
+
 To get help:
 
 ```bash
