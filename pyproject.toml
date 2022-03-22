@@ -6,6 +6,9 @@ authors = ["mentalblood <neceporenkostepan@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
+requests
+tqdm
+mutagen
 
 [tool.poetry.dev-dependencies]
 
