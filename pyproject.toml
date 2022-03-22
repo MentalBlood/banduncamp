@@ -1,22 +1,17 @@
 [tool.poetry]
 name = "banduncamp"
 version = "0.1.0"
-description = ""
-authors = ["mentalblood <neceporenkostepan@gmail.com>"]
+description = "Fast tool for downloading audio from bandcamp"
+authors = ["Нечепоренко Степан <neceporenkostepan@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-requests
-tqdm
-mutagen
+requests = "^2.27.1"
+tqdm = "^4.63.0"
+mutagen = "^1.45.1"
 
 [tool.poetry.dev-dependencies]
 
 [build-system]
-requires = [
-	"poetry-core>=1.0.0",
-	"requests",
-	"tqdm",
-	"mutagen"
-]
+requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
