@@ -25,6 +25,8 @@ To download discography:
 python -m banduncamp <artist_page>/music
 ```
 
+Note that `artist_page` should look like `https://artist.bandcamp.com/`
+
 To get help:
 
 ```bash
