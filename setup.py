@@ -17,6 +17,7 @@ if __name__ == '__main__':
 		long_description_content_type='text/markdown',
 		author='mentalblood',
 		install_requires=[
+			'bs4',
 			'requests',
 			'tqdm',
 			'mutagen',
