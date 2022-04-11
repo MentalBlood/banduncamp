@@ -17,11 +17,11 @@ if __name__ == '__main__':
 		long_description_content_type='text/markdown',
 		author='mentalblood',
 		install_requires=[
-			'bs4',
-			'requests',
-			'tqdm',
-			'mutagen',
-			'python_version >= "3.10"'
+			# 'bs4',
+			# 'requests',
+			# 'tqdm',
+			# 'mutagen',
+			# 'python_version >= "3.10"'
 		],
 		packages=find_packages()
 	)

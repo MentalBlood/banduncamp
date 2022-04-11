@@ -1,6 +1,8 @@
 import os
 import argparse
+from typing import Callable
 from random import randrange
+from functools import partial
 from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool
 
@@ -32,18 +34,25 @@ parser.add_argument(
 	dest='threads',
 	help='number of download threads'
 )
+parser.add_argument(
+	'--downloaded-albums',
+	action=argparse.BooleanOptionalAction
+)
+parser.set_defaults(
+	downloaded_albums=True
+)
 args = parser.parse_args()
 
 
 
-def processUrl(url: str, downloader: Downloader) -> Album | Artist:
+def processUrl(url: str, downloader: Downloader, albums_filter: Callable[[str, str], bool]) -> Album | Artist:
 
 	if 'album' in url.split('/'):
-		C = Album
+		composer = Album.fromUrl
 	else:
-		C = Artist
+		composer = partial(Artist.fromUrl, albums_filter=albums_filter)
 
-	return C.fromUrl(
+	return composer(
 		url=url,
 		downloader=downloader
 	)
@@ -55,7 +64,11 @@ downloader = Downloader(lambda _: randrange(2, 14) / 10)
 
 objects = processInParallel(
 	array=args.url,
-	function=lambda u: processUrl(u, downloader),
+	function=lambda u: processUrl(
+		url=u,
+		downloader=downloader,
+		albums_filter=lambda artist, album: not os.path.exists(os.path.join(args.output, artist, album))
+	),
 	description='Downloading and parsing pages',
 	pool=pool
 )

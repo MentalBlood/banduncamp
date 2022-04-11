@@ -22,11 +22,14 @@ class Artist(Downloadable):
 		return self.albums
 
 	@classmethod
-	def fromUrl(_, url, downloader: Downloader, pool=None):
+	def fromUrl(_, url, downloader: Downloader, pool=None, albums_filter=(lambda artist, album: True)):
 
 		page = downloader(url).text
-
 		root = BeautifulSoup(page, 'html.parser')
+
+		artist_title = correctFileName(
+			root.find('meta', {'property': 'og:title'})['content']
+		)
 
 		grid_items = filter(
 			lambda c: isinstance(c, Tag),
@@ -34,17 +37,22 @@ class Artist(Downloadable):
 		)
 
 		base_url = root.find('meta', {'property': 'og:url'})['content']
-		albums_urls = [
-			f"{base_url}{g.find('a')['href']}"
-			for g in grid_items
-		]
 
-		artist_title = root.find('meta', {'property': 'og:title'})['content']
+		albums_urls = {}
+		for g in grid_items:
+
+			name = correctFileName(g.find('p').text.split('\n')[1].strip())
+			if not albums_filter(artist_title, name):
+				continue
+
+			url = f"{base_url}{g.find('a')['href']}"
+
+			albums_urls[name] = url
 
 		return Artist(
-			title=correctFileName(artist_title),
+			title=artist_title,
 			albums=processInParallel(
-				array=albums_urls,
+				array=[*albums_urls.values()],
 				function=lambda u: Album.fromUrl(u, downloader),
 				description=f"Downloading '{artist_title}' albums pages",
 				pool=pool or ThreadPool(cpu_count())
