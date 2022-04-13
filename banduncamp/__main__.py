@@ -25,20 +25,18 @@ parser.add_argument(
 	'--file',
 	type=str,
 	nargs='*',
-	help='input page: JSON file with albums URLs or discographies URLs list'
+	help='JSON file with output-to-URLs mapping'
 )
 parser.add_argument(
 	'-o',
 	'--output',
 	default=os.getcwd(),
-	dest='output',
 	help='output folder path'
 )
 parser.add_argument(
 	'-t',
 	'--threads',
 	default=2*cpu_count(),
-	dest='threads',
 	help='number of download threads'
 )
 parser.add_argument(
@@ -84,26 +82,35 @@ def downloadByUrls(
 	)
 
 
-urls = args.url
-if args.file:
-	for path in args.file:
-		with open(path) as f:
-			urls += [URL(u) for u in json.load(f)]
+output_to_urls = {}
 
-downloadByUrls(
-	urls=urls,
-	output=args.output,
-	downloader=Downloader(
-		getSleepTime=lambda _: randrange(2, 14) / 10
-	),
-	albums_filter=(
-		lambda artist, album:
-			not args.skip_downloaded_albums
-			or not os.path.exists(
-				os.path.join(args.output, artist, album)
-			)
-	),
-	pool=ThreadPool(
-		int(args.threads)
+if args.url:
+	output_to_urls[args.output] = args.url
+
+if args.file:
+	for path in args.file or []:
+		with open(path) as f:
+			for o, urls in json.load(f).items():
+				if o not in output_to_urls:
+					output_to_urls[o] = []
+				for u in urls:
+					output_to_urls[o].append(URL(u))
+
+pool = ThreadPool(int(args.threads))
+downloader = Downloader(getSleepTime=lambda _: randrange(2, 14) / 10)
+
+
+for o, u in output_to_urls.items():
+	downloadByUrls(
+		urls=u,
+		output=o,
+		downloader=downloader,
+		albums_filter=(
+			lambda artist, album:
+				not args.skip_downloaded_albums
+				or not os.path.exists(
+					os.path.join(o, artist, album)
+				)
+		),
+		pool=pool
 	)
-)
