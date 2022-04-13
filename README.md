@@ -13,13 +13,24 @@ pip install git+https://github.com/MentalBlood/banduncamp
 
 ## Usage
 
-To download album:
+
+To get help:
+
+```bash
+python -m banduncamp -h
+```
+
+Tool will not download audio file if it already exists
+
+
+### Album:
 
 ```bash
 python -m banduncamp <artist_page>/album/<album_name>
 ```
 
-To download discography:
+
+### Discography:
 
 ```bash
 python -m banduncamp <artist_page>/music
@@ -27,13 +38,28 @@ python -m banduncamp <artist_page>/music
 
 Note that `artist_page` should look like `https://artist.bandcamp.com/`
 
-Tool will not download audio file if it already exists
 
-To get help:
+### Tasks
 
 ```bash
-python -m banduncamp -h
+python -m banduncamp <path_to_json>
 ```
+
+JSON should be like:
+
+```json
+{
+    "D:/music/Ambient": [
+        "https://lalala.bandcamp.com/music",
+        "https://lololo.bandcamp.com/music"
+    ],
+    "D:/music/Dungeon Synth": [
+        "https://lululu.bandcamp.com/music",
+        "https://lilili.bandcamp.com/music"
+    ]
+}
+```
+
 
 
 ## Bugs
