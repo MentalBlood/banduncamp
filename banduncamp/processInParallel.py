@@ -8,10 +8,12 @@ def processInParallel(array: list, function: Callable[[any], any], description: 
 
 	result = []
 
-	bar = tqdm(desc=description, total=len(array))
+	if len(array):
 
-	for r in pool.imap_unordered(function, array):
-		result.append(r)
-		bar.update(1)
+		bar = tqdm(desc=description, total=len(array))
+
+		for r in pool.imap_unordered(function, array):
+			result.append(r)
+			bar.update(1)
 
 	return result

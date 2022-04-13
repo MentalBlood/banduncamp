@@ -1,13 +1,13 @@
 import os
+import json
 import argparse
 from typing import Callable
 from random import randrange
-from functools import partial
+from operator import methodcaller
 from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool
 
-from .Album import Album
-from .Artist import Artist
+from .URL import URL
 from .Downloader import Downloader
 from .processInParallel import processInParallel
 
@@ -16,9 +16,16 @@ from .processInParallel import processInParallel
 parser = argparse.ArgumentParser(description='Download audio from Bandcamp')
 parser.add_argument(
 	'url',
-	type=str,
-	nargs='+',
+	type=URL,
+	nargs='*',
 	help='input page: album URL or discography URL'
+)
+parser.add_argument(
+	'-f',
+	'--file',
+	type=str,
+	nargs='*',
+	help='input page: JSON file with albums URLs or discographies URLs list'
 )
 parser.add_argument(
 	'-o',
@@ -35,52 +42,68 @@ parser.add_argument(
 	help='number of download threads'
 )
 parser.add_argument(
-	'--downloaded-albums',
+	'--skip-downloaded-albums',
 	action=argparse.BooleanOptionalAction
 )
 parser.set_defaults(
-	downloaded_albums=True
+	skip_downloaded_albums=True
 )
 args = parser.parse_args()
 
 
 
-def processUrl(url: str, downloader: Downloader, albums_filter: Callable[[str, str], bool]) -> Album | Artist:
+def downloadByUrls(
+	urls: list[str],
+	output: str,
+	downloader: Downloader,
+	albums_filter: Callable[[str, str], bool],
+	pool: ThreadPool
+):
 
-	if 'album' in url.split('/'):
-		composer = Album.fromUrl
-	else:
-		composer = partial(Artist.fromUrl, albums_filter=albums_filter)
+	objects = processInParallel(
+		array=urls,
+		function=methodcaller(
+			'download',
+			downloader=downloader,
+			albums_filter=albums_filter
+		),
+		description='Downloading and parsing pages',
+		pool=pool
+	)
 
-	return composer(
-		url=url,
-		downloader=downloader
+	tasks = []
+	for o in objects:
+		o_tasks = o.getDownload(downloader, output)
+		tasks.extend(o_tasks)
+
+	processInParallel(
+		array=tasks,
+		function=lambda t: t(),
+		description='Downloading covers and tracks',
+		pool=pool
 	)
 
 
+urls = args.url
+if args.file:
+	for path in args.file:
+		with open(path) as f:
+			urls += [URL(u) for u in json.load(f)]
 
-pool = ThreadPool(int(args.threads))
-downloader = Downloader(lambda _: randrange(2, 14) / 10)
-
-objects = processInParallel(
-	array=args.url,
-	function=lambda u: processUrl(
-		url=u,
-		downloader=downloader,
-		albums_filter=lambda artist, album: not os.path.exists(os.path.join(args.output, artist, album))
+downloadByUrls(
+	urls=urls,
+	output=args.output,
+	downloader=Downloader(
+		getSleepTime=lambda _: randrange(2, 14) / 10
 	),
-	description='Downloading and parsing pages',
-	pool=pool
-)
-
-tasks = sum([
-	o.getDownload(downloader, args.output)
-	for o in objects
-], start=[])
-
-processInParallel(
-	array=tasks,
-	function=lambda t: t(),
-	description='Downloading covers and tracks',
-	pool=pool
+	albums_filter=(
+		lambda artist, album:
+			not args.skip_downloaded_albums
+			or not os.path.exists(
+				os.path.join(args.output, artist, album)
+			)
+	),
+	pool=ThreadPool(
+		int(args.threads)
+	)
 )
