@@ -1,5 +1,7 @@
 import os
 import mutagen
+import colorama
+from logama import log
 from dataclasses import dataclass
 from mutagen.easyid3 import EasyID3
 
@@ -44,3 +46,5 @@ class Track(Downloadable):
 			'tracknumber': str(self.number)
 		})
 		tags.save(file_path, v1=2)
+
+		log(file_path, colorama.Fore.LIGHTGREEN_EX)
