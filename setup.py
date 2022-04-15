@@ -18,6 +18,7 @@ if __name__ == '__main__':
 		author='mentalblood',
 		install_requires=[
 			'bs4',
+			'loguru',
 			'requests',
 			'mutagen',
 			'python_version >= "3.10"'
