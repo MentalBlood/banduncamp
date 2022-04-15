@@ -4,5 +4,3 @@ from .Album import Album
 from .Cover import Cover
 from .Artist import Artist
 from .Downloader import Downloader
-
-from .Effect import Effect
