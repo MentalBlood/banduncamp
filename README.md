@@ -1,8 +1,6 @@
 # 🪓 Banduncamp
 
-
-Fast tool for downloading audio from bandcamp
-
+Fast. Stubborn. Tool for downloading audio from bandcamp
 
 ## Installation
 
@@ -10,9 +8,7 @@ Fast tool for downloading audio from bandcamp
 pip install git+https://github.com/MentalBlood/banduncamp
 ```
 
-
 ## Usage
-
 
 To get help:
 
@@ -22,27 +18,28 @@ python -m banduncamp -h
 
 Tool will not download audio file if it already exists
 
+Tool will not download album if corresponding dir already exists. Use `--no-skip-downloaded-albums` to override this
 
 ### Album:
 
 ```bash
-python -m banduncamp <artist_page>/album/<album_name>
+python -m banduncamp <album_page>
 ```
 
+Note that `album_page` should look like `https://artist_name.bandcamp.com/album/album_name`
 
 ### Discography:
 
 ```bash
-python -m banduncamp <artist_page>/music
+python -m banduncamp <artist_page>
 ```
 
-Note that `artist_page` should look like `https://artist.bandcamp.com/`
-
+Note that `artist_page` should look like `https://artist_name.bandcamp.com/music`
 
 ### Tasks
 
 ```bash
-python -m banduncamp <path_to_json>
+python -m banduncamp -f <path_to_json>
 ```
 
 JSON should be like:
@@ -59,8 +56,6 @@ JSON should be like:
     ]
 }
 ```
-
-
 
 ## Bugs
 
