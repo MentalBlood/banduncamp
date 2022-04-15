@@ -1,18 +1,17 @@
 from __future__ import annotations
 
 import os
+from loguru import _logger
 from typing import Callable
 from functools import partial
-from dataclasses import dataclass
 
 from .Downloader import Downloader
 
 
 
-@dataclass
 class Downloadable:
 
-	def download(self, downloader: Downloader, output_folder: str) -> None:
+	def download(self, downloader: Downloader, output_folder: str, logger: _logger.Logger) -> None:
 		pass
 
 	@property
@@ -22,9 +21,9 @@ class Downloadable:
 	def getFolder(self, output_folder: str) -> str:
 		return os.path.join(output_folder, self.title)
 
-	def getDownload(self, downloader: Downloader, output_folder: str) -> list[Callable[[], None]]:
+	def getDownload(self, downloader: Downloader, output_folder: str, logger: _logger.Logger) -> list[Callable[[], None]]:
 
-		result = [partial(self.download, downloader, output_folder)]
+		result = []
 
 		if self.children:
 
@@ -35,6 +34,8 @@ class Downloadable:
 				pass
 
 			for c in self.children:
-				result.extend(c.getDownload(downloader, children_folder))
+				result.extend(c.getDownload(downloader, children_folder, logger))
+
+		result.append(partial(self.download, downloader, output_folder, logger))
 
 		return result

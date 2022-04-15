@@ -1,7 +1,5 @@
 import os
 import mutagen
-import colorama
-from logama import log
 from dataclasses import dataclass
 from mutagen.easyid3 import EasyID3
 
@@ -20,7 +18,7 @@ class Track(Downloadable):
 	duration: int
 	released: bool
 
-	def download(self, downloader, output_folder) -> None:
+	def download(self, downloader, output_folder, logger) -> None:
 
 		if not self.url:
 			return
@@ -47,4 +45,4 @@ class Track(Downloadable):
 		})
 		tags.save(file_path, v1=2)
 
-		log(file_path, colorama.Fore.LIGHTGREEN_EX)
+		logger.success(file_path)

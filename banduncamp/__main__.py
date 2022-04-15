@@ -1,6 +1,7 @@
 import os
 import json
 import argparse
+from loguru import logger
 from typing import Callable
 from random import randrange
 from operator import methodcaller
@@ -18,6 +19,7 @@ parser.add_argument(
 	'url',
 	type=URL,
 	nargs='*',
+	default=[],
 	help='input page: album URL or discography URL'
 )
 parser.add_argument(
@@ -25,6 +27,7 @@ parser.add_argument(
 	'--file',
 	type=str,
 	nargs='*',
+	default=[],
 	help='JSON file with output-to-URLs mapping'
 )
 parser.add_argument(
@@ -42,6 +45,13 @@ parser.add_argument(
 parser.add_argument(
 	'--skip-downloaded-albums',
 	action=argparse.BooleanOptionalAction
+)
+parser.add_argument(
+	'-l',
+	'--logs',
+	nargs='*',
+	default=[],
+	help='files to log to'
 )
 parser.set_defaults(
 	skip_downloaded_albums=True
@@ -71,7 +81,7 @@ def downloadByUrls(
 
 	tasks = []
 	for o in objects:
-		o_tasks = o.getDownload(downloader, output)
+		o_tasks = o.getDownload(downloader, output, logger)
 		tasks.extend(o_tasks)
 
 	processInParallel(
@@ -82,10 +92,9 @@ def downloadByUrls(
 	)
 
 
-output_to_urls = {}
-
-if args.url:
-	output_to_urls[args.output] = args.url
+output_to_urls = {
+	args.output: args.url
+}
 
 if args.file:
 	for path in args.file or []:
@@ -95,6 +104,9 @@ if args.file:
 					output_to_urls[o] = []
 				for u in urls:
 					output_to_urls[o].append(URL(u))
+
+for path in args.logs:
+	logger.add(path)
 
 pool = ThreadPool(int(args.threads))
 downloader = Downloader(getSleepTime=lambda _: randrange(2, 14) / 10)

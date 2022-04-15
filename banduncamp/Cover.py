@@ -11,13 +11,15 @@ class Cover(Downloadable):
 	url: str
 	file_name: str='cover.jpg'
 
-	def download(self, downloader, output_folder) -> None:
+	def download(self, downloader, output_folder, logger) -> None:
 
 		path = os.path.join(output_folder, self.file_name)
 		if os.path.exists(path):
 			return
 
 		downloader(self.url, path)
+
+		logger.success(path)
 
 	@classmethod
 	def fromUrl(_, url):

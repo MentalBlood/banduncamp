@@ -1,6 +1,5 @@
 from typing import Callable
 from functools import partial
-from dataclasses import dataclass
 
 from .Album import Album
 from .Artist import Artist
