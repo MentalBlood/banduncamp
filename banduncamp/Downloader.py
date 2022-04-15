@@ -36,7 +36,7 @@ class Downloader:
 		if output:
 
 			data = response.content
-			data_dir = os.dirname(output)
+			data_dir = os.path.dirname(output)
 			os.makedirs(data_dir, exist_ok=True)
 
 			try:
