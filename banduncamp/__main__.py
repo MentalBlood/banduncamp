@@ -100,17 +100,23 @@ pool = ThreadPool(int(args.threads))
 downloader = Downloader(getSleepTime=lambda _: randrange(2, 14) / 10)
 
 
-for o, u in output_to_urls.items():
-	downloadByUrls(
-		urls=u,
-		output=o,
-		downloader=downloader,
-		albums_filter=(
-			lambda artist, album:
-				not args.skip_downloaded_albums
-				or not os.path.exists(
-					os.path.join(o, artist, album)
-				)
-		),
-		pool=pool
-	)
+processInParallel(
+	array=[*output_to_urls.items()],
+	function=lambda o_u: (
+		lambda o, u: downloadByUrls(
+			urls=u,
+			output=o,
+			downloader=downloader,
+			albums_filter=(
+				lambda artist, album:
+					not args.skip_downloaded_albums
+					or not os.path.exists(
+						os.path.join(o, artist, album)
+					)
+			),
+			pool=pool
+		)
+	)(o_u[0], o_u[1]),
+	description='Processing url groups',
+	pool=pool
+)
