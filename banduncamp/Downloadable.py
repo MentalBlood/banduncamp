@@ -28,10 +28,6 @@ class Downloadable:
 		if self.children:
 
 			children_folder = self.getFolder(output_folder)
-			try:
-				os.makedirs(children_folder)
-			except FileExistsError:
-				pass
 
 			for c in self.children:
 				result.extend(c.getDownload(downloader, children_folder, logger))

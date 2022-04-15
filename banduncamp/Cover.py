@@ -17,7 +17,7 @@ class Cover(Downloadable):
 		if os.path.exists(path):
 			return
 
-		downloader(self.url, path)
+		downloader(self.url, path, logger)
 
 		logger.success(path)
 
