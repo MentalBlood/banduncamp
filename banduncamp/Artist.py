@@ -45,7 +45,11 @@ class Artist(Downloadable):
 			if not albums_filter(artist_title, name):
 				continue
 
-			url = f"{base_url}{g.find('a')['href']}"
+			a = g.find('a')['href']
+			if a.startswith('https'):
+				url = a
+			else:
+				url = f"{base_url}{a}"
 
 			albums_urls[name] = url
 
