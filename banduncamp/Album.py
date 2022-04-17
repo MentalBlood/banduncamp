@@ -7,7 +7,6 @@ from .Cover import Cover
 from .Track import Track
 from .Downloader import Downloader
 from .Downloadable import Downloadable
-from .correctFileName import correctFileName
 
 
 
@@ -44,7 +43,7 @@ class Album(Downloadable):
 		for t in data['trackinfo']:
 			try:
 				tracks.append(Track(
-					title=correctFileName(t['title']),
+					title=t['title'],
 					album=data['current']['title'],
 					artist=data['artist'],
 					url=t['file']['mp3-128'],
@@ -57,7 +56,7 @@ class Album(Downloadable):
 
 		return Album(
 			artist=data['artist'],
-			title=correctFileName(data['current']['title']),
+			title=data['current']['title'],
 			cover=Cover.fromUrl(cover_url),
 			date=data['current']['release_date'],
 			tracks=tracks

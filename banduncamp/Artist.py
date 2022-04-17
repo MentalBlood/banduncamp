@@ -6,7 +6,6 @@ from multiprocessing.pool import ThreadPool
 from .Album import Album
 from .Downloader import Downloader
 from .Downloadable import Downloadable
-from .correctFileName import correctFileName
 from .processInParallel import processInParallel
 
 
@@ -27,9 +26,7 @@ class Artist(Downloadable):
 		page = downloader(url).text
 		root = BeautifulSoup(page, 'html.parser')
 
-		artist_title = correctFileName(
-			root.find('meta', {'property': 'og:title'})['content']
-		)
+		artist_title = root.find('meta', {'property': 'og:title'})['content']
 
 		grid_items = filter(
 			lambda c: isinstance(c, Tag),
@@ -41,7 +38,7 @@ class Artist(Downloadable):
 		albums_urls = {}
 		for g in grid_items:
 
-			name = correctFileName(g.find('p').text.split('\n')[1].strip())
+			name = g.find('p').text.split('\n')[1].strip()
 			if not albums_filter(artist_title, name):
 				continue
 

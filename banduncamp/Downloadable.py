@@ -6,6 +6,7 @@ from typing import Callable
 from functools import partial
 
 from .Downloader import Downloader
+from .correctFileName import correctFileName
 
 
 
@@ -19,7 +20,7 @@ class Downloadable:
 		return []
 
 	def getFolder(self, output_folder: str) -> str:
-		return os.path.join(output_folder, self.title)
+		return os.path.join(output_folder, correctFileName(self.title))
 
 	def getDownload(self, downloader: Downloader, output_folder: str, logger: _logger.Logger) -> list[Callable[[], None]]:
 
