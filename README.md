@@ -18,7 +18,7 @@ python -m banduncamp -h
 
 Tool will not download audio file if it already exists
 
-Tool will not download album if corresponding dir already exists. Use `--no-skip-downloaded-albums` to override this
+Tool will not download album if `*mp3` files are exist in corresponding dir already. Use `--no-skip-downloaded-albums` to override this
 
 ### Album:
 
