@@ -6,6 +6,7 @@ from multiprocessing.pool import ThreadPool
 from .Album import Album
 from .Downloader import Downloader
 from .Downloadable import Downloadable
+from .correctFileName import correctFileName
 from .processInParallel import processInParallel
 
 
@@ -39,7 +40,10 @@ class Artist(Downloadable):
 		for g in grid_items:
 
 			name = g.find('p').text.split('\n')[1].strip()
-			if not albums_filter(artist_title, name):
+			if not albums_filter(
+				correctFileName(artist_title),
+				correctFileName(name)
+			):
 				continue
 
 			a = g.find('a')['href']

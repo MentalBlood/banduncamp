@@ -122,9 +122,9 @@ processInParallel(
 			albums_filter=(
 				lambda artist, album:
 					not args.skip_downloaded_albums
-					or not os.path.exists(
+					or not any(p.endswith('.mp3') for p in os.listdir(
 						os.path.join(o, artist, album)
-					)
+					))
 			),
 			pool=pool
 		)
