@@ -11,7 +11,7 @@ if __name__ == '__main__':
 
 	setup(
 		name='banduncamp',
-		version='1.4.0',
+		version='1.4.1',
 		description='Fast tool for downloading audio from bandcamp',
 		long_description=long_description,
 		long_description_content_type='text/markdown',

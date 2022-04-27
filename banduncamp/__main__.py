@@ -11,6 +11,7 @@ from multiprocessing.pool import ThreadPool
 from .URL import URL
 from .Downloader import Downloader
 from .processInParallel import processInParallel
+from .composeDownloadedAlbumsFilter import composeDownloadedAlbumsFilter
 
 
 
@@ -119,13 +120,7 @@ processInParallel(
 			urls=u,
 			output=o,
 			downloader=downloader,
-			albums_filter=(
-				lambda artist, album:
-					not args.skip_downloaded_albums
-					or not any(p.endswith('.mp3') for p in os.listdir(
-						os.path.join(o, artist, album)
-					))
-			),
+			albums_filter=composeDownloadedAlbumsFilter(o, args.skip_downloaded_albums),
 			pool=pool
 		)
 	)(o_u[0], o_u[1]),
