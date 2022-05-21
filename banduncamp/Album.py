@@ -24,9 +24,7 @@ class Album(Downloadable):
 		return [self.cover, *self.tracks]
 
 	@classmethod
-	def fromUrl(_, url, downloader: Downloader):
-
-		page = downloader(url).text
+	def fromPage(_, page: str):
 
 		data = json.loads(
 			html.unescape(

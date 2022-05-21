@@ -22,9 +22,8 @@ class Artist(Downloadable):
 		return self.albums
 
 	@classmethod
-	def fromUrl(_, url, downloader: Downloader, pool=None, albums_filter=(lambda artist, album: True)):
+	def fromPage(_, page: str, downloader: Downloader, pool=None, albums_filter=(lambda artist, album: True)):
 
-		page = downloader(url).text
 		root = BeautifulSoup(page, 'html.parser')
 
 		artist_title = root.find('meta', {'property': 'og:title'})['content']
@@ -58,7 +57,7 @@ class Artist(Downloadable):
 			title=artist_title,
 			albums=processInParallel(
 				array=[*albums_urls.values()],
-				function=lambda u: Album.fromUrl(u, downloader),
+				function=lambda u: Album.fromPage(downloader(u).text),
 				description=f"Downloading '{artist_title}' albums pages",
 				pool=pool or ThreadPool(cpu_count())
 			)

@@ -15,9 +15,11 @@ class URL(str):
 		albums_filter: Callable[[str, str], bool]
 	) -> Album | Artist:
 
+		page = downloader(url).text
+
 		composers = {
-			'album': Album.fromUrl,
-			'artist': partial(Artist.fromUrl, albums_filter=albums_filter)
+			'album': Album.fromPage,
+			'artist': partial(Artist.fromPage, downloader=downloader, albums_filter=albums_filter)
 		}
 
 		if 'album' in url.split('/'):
@@ -26,18 +28,13 @@ class URL(str):
 			proposed = 'artist'
 
 		try:
-			result = composers[proposed](
-				url=url,
-				downloader=downloader
-			)
+			result = composers[proposed](page=page)
+			return result
 		except:
 			for another in composers.keys():
 				if another != proposed:
 					try:
-						result = composers[another](
-							url=url,
-							downloader=downloader
-						)
+						result = composers[another](page=page)
 						return result
 					except:
 						pass
