@@ -1,5 +1,6 @@
 from typing import Callable
 from functools import partial
+from multiprocessing.pool import ThreadPool
 
 from .Album import Album
 from .Artist import Artist
@@ -12,6 +13,7 @@ class URL(str):
 	def download(
 		url: str,
 		downloader: Downloader,
+		pool: ThreadPool,
 		albums_filter: Callable[[str, str], bool]
 	) -> Album | Artist:
 
@@ -19,7 +21,12 @@ class URL(str):
 
 		composers = {
 			'album': Album.fromPage,
-			'artist': partial(Artist.fromPage, downloader=downloader, albums_filter=albums_filter)
+			'artist': partial(
+				Artist.fromPage,
+				downloader=downloader,
+				pool=pool,
+				albums_filter=albums_filter
+			)
 		}
 
 		if 'album' in url.split('/'):

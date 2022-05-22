@@ -74,6 +74,7 @@ def downloadByUrls(
 		function=methodcaller(
 			'download',
 			downloader=downloader,
+			pool=pool,
 			albums_filter=albums_filter
 		),
 		description='Downloading and parsing pages',
