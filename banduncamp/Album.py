@@ -1,6 +1,7 @@
 import re
 import json
 import html
+from bs4 import BeautifulSoup
 from dataclasses import dataclass
 
 from .Cover import Cover
@@ -15,6 +16,7 @@ class Album(Downloadable):
 
 	title: str
 	artist: str
+	composer: str
 	cover: Cover
 	date: str
 	tracks: list[Track]
@@ -37,6 +39,10 @@ class Album(Downloadable):
 		)
 		cover_url = re.search('<a class="popupImage" href="([^\"]*)', page).group(1)
 
+		root = BeautifulSoup(page, 'html.parser')
+		band_name_tag = root.find(id='band-name-location')
+		composer = band_name_tag.select('span.title')[0].text
+
 		tracks = []
 		for t in data['trackinfo']:
 			try:
@@ -44,6 +50,7 @@ class Album(Downloadable):
 					title=t['title'],
 					album=data['current']['title'],
 					artist=data['artist'],
+					composer=composer,
 					url=t['file']['mp3-128'],
 					number=t['track_num'],
 					duration=t['duration'],
@@ -54,6 +61,7 @@ class Album(Downloadable):
 
 		return Album(
 			artist=data['artist'],
+			composer=composer,
 			title=data['current']['title'],
 			cover=Cover.fromUrl(cover_url),
 			date=data['current']['release_date'],

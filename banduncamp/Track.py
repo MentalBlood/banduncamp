@@ -14,6 +14,7 @@ class Track(Downloadable):
 	title: str
 	album: str
 	artist: str
+	composer: str
 	url: str | None
 	number: int
 	duration: int
@@ -41,6 +42,7 @@ class Track(Downloadable):
 			'title': self.title,
 			'album': self.album,
 			'artist': self.artist,
+			'composer': self.composer,
 			'albumartist': self.artist,
 			'tracknumber': str(self.number)
 		})
