@@ -1,7 +1,8 @@
-poetry.lock
 __pycache__
 *.egg-info
 dist
-banduncamp.json
-base_log.txt
 test.py
+.vscode
+build
+bandasync
+convert*

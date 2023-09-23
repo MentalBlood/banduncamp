@@ -1,64 +1,45 @@
-from dataclasses import dataclass
-from bs4 import BeautifulSoup, Tag
-from multiprocessing import cpu_count
-from multiprocessing.pool import ThreadPool
+import bs4
+import functools
+import dataclasses
 
+from .Url   import Url
+from .Page  import Page
 from .Album import Album
-from .Downloader import Downloader
-from .Downloadable import Downloadable
-from .correctFileName import correctFileName
-from .processInParallel import processInParallel
 
 
 
-@dataclass
-class Artist(Downloadable):
+@dataclasses.dataclass(frozen=True)
+class Artist:
 
-	title: str
-	albums: list[Album]
+	page : Page
 
-	@property
-	def children(self):
-		return self.albums
-
-	@classmethod
-	def fromPage(_, page: str, downloader: Downloader, pool=None, albums_filter=(lambda artist, album: True)):
-
-		root = BeautifulSoup(page, 'html.parser')
-
-		artist_title = root.find('meta', {'property': 'og:title'})['content']
-
-		grid_items = filter(
-			lambda c: isinstance(c, Tag),
-			root.find(id='music-grid').children
+	@functools.cached_property
+	def base(self):
+		return Url(
+			self.page.parsed.find_all(
+				'meta',
+				{'property': 'og:url'}
+			)[0]['content']
 		)
 
-		base_url = root.find('meta', {'property': 'og:url'})['content']
+	@functools.cached_property
+	def composer(self):
+		return str(self.page.parsed.find_all('meta', {'property': 'og:title'})[0]['content'])
 
-		albums_urls = {}
-		for g in grid_items:
-
-			name = g.find('p').text.split('\n')[1].strip()
-			if not albums_filter(
-				correctFileName(artist_title),
-				correctFileName(name)
-			):
-				continue
-
-			a = g.find('a')['href']
-			if a.startswith('https'):
-				url = a
-			else:
-				url = f"{base_url}{a}"
-
-			albums_urls[name] = url
-
-		return Artist(
-			title=artist_title,
-			albums=processInParallel(
-				array=[*albums_urls.values()],
-				function=lambda u: Album.fromPage(downloader(u).text),
-				description=f"Downloading '{artist_title}' albums pages",
-				pool=pool or ThreadPool(cpu_count())
+	@property
+	def albums(self):
+		return (
+			Album(
+				page = Page(
+					Url(a)
+					if (a := element.find_all('a')[0]['href']).startswith('https')
+					else self.base / a
+				),
+				guessed = Album.Guessed(
+					name     = element.find_all('p')[0].text.split('\n')[1].strip(),
+					composer = self.composer
+				)
 			)
+			for element in self.page.parsed.find_all(id = 'music-grid')[0].children
+			if isinstance(element, bs4.Tag)
 		)

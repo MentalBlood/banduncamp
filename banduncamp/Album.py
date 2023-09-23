@@ -1,69 +1,93 @@
 import re
-import json
 import html
-from bs4 import BeautifulSoup
-from dataclasses import dataclass
+import json
+import functools
+import dataclasses
 
-from .Cover import Cover
+from .Url   import Url
+from .Page  import Page
 from .Track import Track
-from .Downloader import Downloader
-from .Downloadable import Downloadable
 
 
 
-@dataclass
-class Album(Downloadable):
+@dataclasses.dataclass(frozen = True, kw_only = False)
+class Album:
 
-	title: str
-	artist: str
-	composer: str
-	cover: Cover
-	date: str
-	tracks: list[Track]
-	
-	@property
-	def children(self):
-		return [self.cover, *self.tracks]
+	page    : Page
+	guessed : 'Album.Guessed'
 
-	@classmethod
-	def fromPage(_, page: str):
+	@dataclasses.dataclass(frozen = True, kw_only = True)
+	class Guessed:
+		name     : str
+		composer : str
 
-		data = json.loads(
+	@functools.cached_property
+	def cover(self):
+		return Page(
+			Url(
+				next(
+					re.finditer(
+						'<a class="popupImage" href="([^\"]*)',
+						self.page.text
+					)
+				).group(1)
+			)
+		)
+
+	@functools.cached_property
+	def composer(self):
+		return self.page.parsed.find_all(id = 'band-name-location')[0].select('span.title')[0].text
+
+	@functools.cached_property
+	def info(self):
+		return json.loads(
 			html.unescape(
 				re.sub(
 					r'\\u\d\d\d\d',
 					'',
-					re.search(r'data-tralbum=\"([^\"]*)\"', page).group(1)
+					next(re.finditer(r'data-tralbum=\"([^\"]*)\"', self.page.text)).group(1)
 				)
 			)
 		)
-		cover_url = re.search('<a class="popupImage" href="([^\"]*)', page).group(1)
 
-		root = BeautifulSoup(page, 'html.parser')
-		band_name_tag = root.find(id='band-name-location')
-		composer = band_name_tag.select('span.title')[0].text
+	@functools.cached_property
+	def name(self):
+		return str(self.info['current']['title'])
 
-		tracks = []
-		for t in data['trackinfo']:
-			try:
-				tracks.append(Track(
-					title=t['title'],
-					album=data['current']['title'],
-					artist=data['artist'],
-					composer=composer,
-					url=t['file']['mp3-128'],
-					number=t['track_num'],
-					duration=t['duration'],
-					released=not t['unreleased_track']
-				))
-			except (TypeError, KeyError):
-				pass
+	@functools.cached_property
+	def artist(self):
+		return str(self.info['artist'])
 
-		return Album(
-			artist=data['artist'],
-			composer=composer,
-			title=data['current']['title'],
-			cover=Cover.fromUrl(cover_url),
-			date=data['current']['release_date'],
-			tracks=tracks
+	@functools.cached_property
+	def genres(self):
+		return (
+			t.text
+			for t in self.page.parsed.select('.tag')
+		)
+
+	@property
+	def tracks(self):
+		return (
+			Track(
+				page = Page(
+					Url(
+						t['file']['mp3-128']
+					)
+				),
+				guessed = Track.Guessed(
+					title    = t['title'],
+					album    = self.name,
+					genre    = self.genres,
+					composer = self.composer,
+					artist   = self.artist,
+					number   = t['track_num']
+				)
+			)
+			for t in self.info['trackinfo']
+			if (
+				(not t['unreleased_track']) and
+				('file' in t) and
+				(t['file'] is not None) and
+				('mp3-128' in t['file'])
+			)
 		)

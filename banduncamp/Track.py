@@ -1,51 +1,54 @@
-import os
-import mutagen
-from dataclasses import dataclass
-from mutagen.easyid3 import EasyID3
+import yoop
+import pytags
+import typing
+import functools
+import dataclasses
 
-from .Downloadable import Downloadable
-from .correctFileName import correctFileName
+from .Page import Page
 
 
 
-@dataclass
-class Track(Downloadable):
+@dataclasses.dataclass(frozen = True, kw_only = True)
+class Track:
 
-	title: str
-	album: str
-	artist: str
-	composer: str
-	url: str | None
-	number: int
-	duration: int
-	released: bool
+	page    : Page
+	guessed : 'Track.Guessed'
 
-	def download(self, downloader, output_folder, logger) -> None:
+	@dataclasses.dataclass(frozen = True, kw_only = True)
+	class Guessed:
+		title    : str
+		album    : str
+		artist   : str
+		number   : int
+		composer : str
+		genre    : typing.Iterable[str]
 
-		if not self.url:
-			return
+	@functools.cached_property
+	def genre(self):
+		if len(all := (*self.guessed.genre,)):
+			return all[0]
+		else:
+			return None
 
-		file_path = os.path.join(output_folder, correctFileName(f'{self.title}.mp3'))
-		if os.path.exists(file_path):
-			return
-
-		downloader(self.url, file_path)
-
-		try:
-			tags = EasyID3(file_path)
-		except mutagen.id3.ID3NoHeaderError:
-			f = mutagen.File(file_path, easy=True)
-			f.add_tags()
-			tags = f
-
-		tags.update({
-			'title': self.title,
-			'album': self.album,
-			'artist': self.artist,
-			'composer': self.composer,
-			'albumartist': self.artist,
-			'tracknumber': str(self.number)
-		})
-		tags.save(file_path, v1=2)
-
-		logger.success(file_path)
+	@functools.cached_property
+	def data(self):
+		return pytags.Tags(
+			yoop.Audio(
+				pytags.Media(
+					self.page.content
+				)
+			).converted(
+				bitrate    = yoop.Audio.Bitrate(128),
+				samplerate = yoop.Audio.Samplerate(44100),
+				format     = yoop.Audio.Format.MP3,
+				channels   = yoop.Audio.Channels.stereo
+			).source
+		)(
+			genre       = '' if self.genre is None else self.genre,
+			title       = self.guessed.title,
+			album       = self.guessed.album,
+			artist      = self.guessed.artist,
+			composer    = self.guessed.composer,
+			albumartist = self.guessed.artist,
+			tracknumber = str(self.guessed.number)
+		).source

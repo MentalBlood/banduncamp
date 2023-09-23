@@ -1,27 +1,40 @@
-import os
 from setuptools import setup, find_packages
 
 
 if __name__ == '__main__':
 
-	long_description = ''
-	if os.path.exists('README.md'):
-		with open('README.md', encoding='utf-8') as f:
-			long_description = f.read()
-
 	setup(
-		name='banduncamp',
-		version='1.6.0',
-		description='Fast tool for downloading audio from bandcamp',
-		long_description=long_description,
-		long_description_content_type='text/markdown',
-		author='mentalblood',
-		install_requires=[
+
+		name             = 'banduncamp',
+		version          = '2.0.0',
+		python_requires  = '>=3.11',
+		install_requires = [
 			'bs4',
-			'loguru',
-			'requests',
-			'mutagen',
-			'python_version >= "3.10"'
+			'yoop',
+			'pytags'
 		],
-		packages=find_packages()
+		keywords = ['downloader'],
+		url      = 'https://github.com/MentalBlood/banduncamp',
+
+		description                   = 'Tool for downloading music from bandcamp',
+		long_description              = open('README.md').read(),
+		long_description_content_type = 'text/markdown',
+
+		classifiers = [
+			'Development Status :: 5 - Production/Stable',
+			'Intended Audience :: End Users/Desktop'
+			'Topic :: Internet :: WWW/HTTP :: Indexing/Search',
+			'Typing :: Typed',
+			'Operating System :: OS Independent',
+			'Programming Language :: Python :: 3.10',
+			'License :: OSI Approved :: BSD License'
+		],
+
+		author           = 'mentalblood',
+		author_email     = 'neceporenkostepan@gmail.com',
+		maintainer       = 'mentalblood',
+		maintainer_email = 'neceporenkostepan@gmail.com',
+
+		packages = find_packages()
+
 	)

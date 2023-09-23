@@ -1,130 +1,49 @@
-import os
-import json
-import argparse
-from loguru import logger
-from typing import Callable
-from random import randrange
-from operator import methodcaller
-from multiprocessing import cpu_count
-from multiprocessing.pool import ThreadPool
+import click
+import pathlib
 
-from .URL import URL
-from .Downloader import Downloader
-from .processInParallel import processInParallel
-from .composeDownloadedAlbumsFilter import composeDownloadedAlbumsFilter
+from .Url     import Url
+from .Page    import Page
+from .Artist   import Artist
+from .Pathable import Pathable
 
 
 
-parser = argparse.ArgumentParser(description='Download audio from Bandcamp')
-parser.add_argument(
-	'url',
-	type=URL,
-	nargs='*',
-	default=[],
-	help='input page: album URL or discography URL'
-)
-parser.add_argument(
-	'-f',
-	'--file',
-	type=str,
-	nargs='*',
-	default=[],
-	help='JSON file with output-to-URLs mapping'
-)
-parser.add_argument(
-	'-o',
-	'--output',
-	default=os.getcwd(),
-	help='output folder path'
-)
-parser.add_argument(
-	'-t',
-	'--threads',
-	default=2*cpu_count(),
-	help='number of download threads'
-)
-parser.add_argument(
-	'--skip-downloaded-albums',
-	action=argparse.BooleanOptionalAction
-)
-parser.add_argument(
-	'-l',
-	'--logs',
-	nargs='*',
-	default=[],
-	help='files to log to'
-)
-parser.set_defaults(
-	skip_downloaded_albums=True
-)
-args = parser.parse_args()
+@click.group
+def cli():
+	pass
 
 
 
-def downloadByUrls(
-	urls: list[str],
-	output: str,
-	downloader: Downloader,
-	albums_filter: Callable[[str, str], bool],
-	pool: ThreadPool
-):
+@cli.command(name = 'artist')
+@click.option('--url',  required = True, type = Url,          help = 'address of artist music page')
+@click.option('--root', required = True, type = pathlib.Path, help = 'path to save albums to')
+def artist(url : Url, root: pathlib.Path):
 
-	objects = processInParallel(
-		array=urls,
-		function=methodcaller(
-			'download',
-			downloader=downloader,
-			pool=pool,
-			albums_filter=albums_filter
-		),
-		description='Downloading and parsing pages',
-		pool=pool
-	)
+	for album in (artist := Artist(Page(url))).albums:
 
-	tasks = []
-	for o in objects:
-		o_tasks = o.getDownload(downloader, output, logger)
-		tasks.extend(o_tasks)
+		if pathlib.Path(
+			root /
+			Pathable(artist.composer) /
+			Pathable(album.guessed.name)
+		).exists():
+			continue
 
-	processInParallel(
-		array=tasks,
-		function=lambda t: t(),
-		description='Downloading covers and tracks',
-		pool=pool
-	)
+		for track in album.tracks:
+
+			if (
+				path := pathlib.Path(
+					root /
+					Pathable(artist.composer) /
+					Pathable(album.name) /
+					f'{Pathable(track.guessed.title).value}.mp3'
+				)
+			).exists():
+				continue
+
+			path.parent.mkdir(parents = True, exist_ok = True)
+			path.write_bytes(track.data.data)
+			print(str(path))
 
 
-output_to_urls = {
-	args.output: args.url
-}
 
-if args.file:
-	for path in args.file or []:
-		with open(path) as f:
-			for o, urls in json.load(f).items():
-				if o not in output_to_urls:
-					output_to_urls[o] = []
-				for u in urls:
-					output_to_urls[o].append(URL(u))
-
-for path in args.logs:
-	logger.add(path)
-
-pool = ThreadPool(int(args.threads))
-downloader = Downloader(getSleepTime=lambda _: randrange(2, 14) / 10)
-
-
-processInParallel(
-	array=[*output_to_urls.items()],
-	function=lambda o_u: (
-		lambda o, u: downloadByUrls(
-			urls=u,
-			output=o,
-			downloader=downloader,
-			albums_filter=composeDownloadedAlbumsFilter(o, args.skip_downloaded_albums),
-			pool=pool
-		)
-	)(o_u[0], o_u[1]),
-	description='Processing url groups',
-	pool=pool
-)
+cli()
