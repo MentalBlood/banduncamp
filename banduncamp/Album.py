@@ -36,7 +36,7 @@ class Album:
 
 	@functools.cached_property
 	def composer(self):
-		return self.page.parsed.find_all(id = 'band-name-location')[0].select('span.title')[0].text
+		return str(self.page.parsed.find_all(id = 'band-name-location')[0].select('span.title')[0].text)
 
 	@functools.cached_property
 	def info(self):
