@@ -29,16 +29,19 @@ class Saved:
 		...
 
 	def __call__(self, o: Track | Album | Artist):
+
+		path = self.path / o
+
 		match o:
 			case Track():
-				if self.path.value.exists():
+				if path.value.exists():
 					return self
-				return self.overwritten(o)
+				return Saved(path).overwritten(o)
 			case Album():
-				if self.path.value.exists():
+				if path.value.exists():
 					return ()
 				return (
-					Saved(self.path / o)(track)
+					Saved(path)(track)
 					for track in o.tracks
 				)
 			case Artist():

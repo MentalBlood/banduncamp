@@ -22,6 +22,7 @@ class Track:
 		number   : int
 		composer : str
 		genre    : typing.Iterable[str]
+		cover    : bytes
 
 	@functools.cached_property
 	def genre(self):
@@ -32,23 +33,27 @@ class Track:
 
 	@functools.cached_property
 	def data(self):
-		return pytags.Tags(
-			yoop.Audio(
-				pytags.Media(
-					self.page.content
-				)
-			).converted(
-				bitrate    = yoop.Audio.Bitrate(128),
-				samplerate = yoop.Audio.Samplerate(44100),
-				format     = yoop.Audio.Format.MP3,
-				channels   = yoop.Audio.Channels.stereo
+		return yoop.Audio(
+			pytags.Tags(
+				yoop.Audio(
+					pytags.Media(
+						self.page.content
+					)
+				).converted(
+					bitrate    = yoop.Audio.Bitrate(128),
+					samplerate = yoop.Audio.Samplerate(44100),
+					format     = yoop.Audio.Format.MP3,
+					channels   = yoop.Audio.Channels.stereo
+				).source
+			)(
+				genre       = '' if self.genre is None else self.genre,
+				title       = self.guessed.title,
+				album       = self.guessed.album,
+				artist      = self.guessed.artist,
+				composer    = self.guessed.composer,
+				albumartist = self.guessed.artist,
+				tracknumber = str(self.guessed.number)
 			).source
-		)(
-			genre       = '' if self.genre is None else self.genre,
-			title       = self.guessed.title,
-			album       = self.guessed.album,
-			artist      = self.guessed.artist,
-			composer    = self.guessed.composer,
-			albumartist = self.guessed.artist,
-			tracknumber = str(self.guessed.number)
+		).covered(
+			self.guessed.cover
 		).source

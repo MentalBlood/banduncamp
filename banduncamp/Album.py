@@ -80,7 +80,8 @@ class Album:
 					genre    = self.genres,
 					composer = self.composer,
 					artist   = self.artist,
-					number   = t['track_num']
+					number   = t['track_num'],
+					cover    = self.cover.content
 				)
 			)
 			for t in self.info['trackinfo']
