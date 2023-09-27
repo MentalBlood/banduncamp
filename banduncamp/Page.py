@@ -24,4 +24,4 @@ class Page:
 
 	@functools.cached_property
 	def parsed(self):
-		return BeautifulSoup(self.content, 'html.parser')
+		return BeautifulSoup(self.content, 'html.parser', from_encoding = 'utf8')
