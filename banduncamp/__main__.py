@@ -19,8 +19,11 @@ def cli():
 @click.option('--url',  required = True, type = Url,          help = 'address of artist music page')
 @click.option('--root', required = True, type = pathlib.Path, help = 'path to save folder with albums to')
 def artist(url: Url, root: pathlib.Path):
-	for s in Saved(Path(root))(Artist(Page(url))):
-		print(str(s.path.value))
+	try:
+		for s in Saved(Path(root))(Artist(Page(url))):
+			print(f'{url.value} {str(s.path.value)}')
+	except Exception as e:
+		print(f'{url.value} {e.__class__.__name__} {e}')
 
 
 
