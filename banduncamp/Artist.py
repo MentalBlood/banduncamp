@@ -32,7 +32,7 @@ class Artist:
 			Album(
 				page = Page(
 					Url(a)
-					if (a := element.find_all('a')[0]['href']).startswith('https')
+					if a.startswith('https')
 					else self.base / a
 				),
 				guessed = Album.Guessed(
@@ -41,5 +41,8 @@ class Artist:
 				)
 			)
 			for element in self.page.parsed.find_all(id = 'music-grid')[0].children
-			if isinstance(element, bs4.Tag)
+			if (
+				isinstance(element, bs4.Tag) and
+				'/track/' not in (a := element.find_all('a')[0]['href'])
+			)
 		)
