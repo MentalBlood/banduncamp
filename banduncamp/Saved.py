@@ -46,6 +46,6 @@ class Saved:
 				)
 			case Artist():
 				return itertools.chain.from_iterable(
-					Saved(self.path / o)(album)
+					Saved(path)(album)
 					for album in o.albums
 				)
