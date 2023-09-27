@@ -18,7 +18,7 @@ class Pathable:
 			Pathable.regex,
 			'',
 			self.source
-		).strip('. ')[:255]
+		).strip('. ')[:255].strip('. ')
 
 	def __rtruediv__(self, path: pathlib.Path):
 		return path / self.value
